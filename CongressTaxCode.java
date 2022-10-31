@@ -26,10 +26,12 @@ public class CongressTaxCode {
         Scanner taxScanner = new Scanner(taxStatistics);
         // Get the header of the congressional dataset
         houseScanner.nextLine(); // this is necessary because there are two rows of headers in this particular dataset
+        houseScanner.nextLine();
+        houseScanner.nextLine();
         String [] houseHeader = houseScanner.nextLine().split(",");
         ArrayList <String> houseHeaderAL =  new ArrayList <> (Arrays.asList(houseHeader));
-        int houseYearIndex = houseHeader.indexOf("Year"); // also need to be able to access the year
-        int demPercentSeatsWonIndex = houseHeader.indexOf("Percentage of seats won"); // get index of democratic percentage of seats won column
+        int houseYearIndex = houseHeaderAL.indexOf("Year"); // also need to be able to access the year
+        int demPercentSeatsWonIndex = houseHeaderAL.indexOf("Percentage of seats won"); // get index of democratic percentage of seats won column
         // Get header of tax dataset
         String [] taxHeader = taxScanner.nextLine().split(",");
         ArrayList <String> taxHeaderAL = new ArrayList <> (Arrays.asList(taxHeader));
@@ -37,20 +39,22 @@ public class CongressTaxCode {
         int incomeTaxIndex = taxHeaderAL.indexOf("Individual Income Taxes");
         // Need to move taxScanner to start at 1946 since the two have different start dates
         boolean keepIterating = true;
+        int whatLine = 0;
         while(keepIterating){
-            String taxLine = taxScanner.nextLine();
-            Scanner taxLineScanner = new Scanner(taxLine);
-            if (taxLineScanner.next() == 1946){
-                taxLineScanner.close();
+            whatLine++;
+            System.out.println("Line number " + whatLine);
+            String [] taxLine = taxScanner.nextLine().split(",");
+            ArrayList <String> taxLineAL = new ArrayList <> (Arrays.asList(taxLine));
+            if (taxLineAL.indexOf("1946") != -1){
+                System.out.println("BREAK");
                 break;
             }
-            taxLineScanner.close();
         }
         /* the years that be considered in this project are the years 1946-2012 although the house dataset contains data up to 2018. The tax dataset 
         has "estimates" of taxes up to 2018, but only has real data up to 2021. Since the tax dataset doesn't have real data up to that 2018, the boolean endYear must be created to ensure the 
         Scanner doesn't go past 2012 in the datsets and therefore treat estimated data as real data */
         int endYear = 2018;
-        int currentYear;
+        int currentYear = 0;
         // Variables used as running totals in loop prepared
         int repubYears = 0;
         int demYears = 0;
@@ -60,17 +64,17 @@ public class CongressTaxCode {
         while(!(currentYear == endYear)){
             String houseLine = houseScanner.nextLine();
             Scanner houseLineScanner = new Scanner (houseLine);
-            String [] houseLineAA = houseLineScanner.split(",");
+            String [] houseLineAA = houseLine.split(",");
             //updating currentYear so it can be checked in the condition of the while loop
-            currentYear = houseLineAA[houseYearIndex];
-            double demPercentSeatsWon = houseLineAA[demPercentSeatsWonIndex];
+            currentYear = Integer.parseInt(houseLineAA[houseYearIndex]);
+            double demPercentSeatsWon = Double.parseDouble(houseLineAA[demPercentSeatsWonIndex]);
             // Go into tax datset and get the taxation percentage from the correct year
             double percentIncomeTaxOfNextYears = 0;
             for (int i = 0; i < 2; i++){
                 String taxLine = taxScanner.nextLine();
                 Scanner taxLineScanner = new Scanner(taxLine);
-                String [] taxLineAA = taxLineScanner.split(",");
-                percentIncomeTax = percentIncomeTax + taxLineAA[incomeTaxIndex];
+                String [] taxLineAA = taxLine.split(",");
+                percentIncomeTaxOfNextYears = percentIncomeTaxOfNextYears + Double.parseDouble(taxLineAA[incomeTaxIndex]);
                 taxLineScanner.close();
             }
             
@@ -88,4 +92,9 @@ public class CongressTaxCode {
         double averagePercentFromIncomeTaxDemocrat = demTotalPercents/demYears;
         System.out.println("Republican Average Percent from Individual Income Taxes:" + averagePercentFromIncomeTaxRepublican + "/n" + "Democrat Average Percent From Individual Income Taxes: " + averagePercentFromIncomeTaxDemocrat);
     }
+
+    // Test to see if numbers are in the right range
+    // Put it in the array list if it is
+    // Go through first dataset and make an arraylist of all of the years
+    // arraylist of integers and arraylist of arrays
 }
