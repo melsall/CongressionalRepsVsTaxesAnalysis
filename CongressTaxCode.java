@@ -5,24 +5,17 @@ public class CongressTaxCode {
     public static void main (String [] args)throws FileNotFoundException{
         File houseStatistics = new File("House_Dataset.csv");
         File taxStatistics = new File("Tax_Dataset.csv");
-        ArrayList <String> demYears = splitIntoRepubAndDemYears(houseStatistics, 1946, 2012).get(0);
-        System.out.println(demYears.get(0));
-        System.out.println(demYears.size());
-        ArrayList <String> repubYears = splitIntoRepubAndDemYears(houseStatistics, 1946, 2012).get(1);
-        System.out.println(repubYears.get(0));
-        System.out.println("Repub Size " + repubYears.size());
-        System.out.println("last repub element" + repubYears.get(9));
-        System.out.println("democrats index of 2012" + demYears.indexOf("2012"));
 
-        // Testing
-        compareTaxesBasedOnParty(houseStatistics, taxStatistics, 1946, 2012, "Corporate Income Taxes");
+        // Testing 2 overarching methods
+        compareTaxesBasedOnParty(houseStatistics, taxStatistics, 1946, 2012, "Individual Income Taxes");
+        findCorrelationBetweenRepresentativesAndTaxes (houseStatistics, taxStatistics, 1946, 2012, "Corporate Income Taxes");
     }
     /* Question 1: 
     The democratic party is generally the party associated with higher income taxes. 
     Is the average percentage of federal revenue from income tax actually higher when democrats have a house majority?  */
-    /* Question 2: During Republican dominated years, is the average percentage of revenue from corporate income taxes a
-    ctually lower than in democratic years? */
-
+    /* Question 2: Is there a positive correlation between amount of Republicans and power and the percent of federal revenue from
+    corporate income taxes ? */
+    // The Following method was used for research question 1
     /* Used the houseStatistics and the taxStatistics arrays to compare the percent of federal revenue from a certain type of taxes within a set number of years */
     public static void compareTaxesBasedOnParty(File houseStatistics, File taxStatistics, int minYear, int maxYear, String typeOfTax) throws FileNotFoundException{
       // Using the splitIntoRepubAndDemYears method, save two arraylists as repubYears and demYears
@@ -70,6 +63,7 @@ public class CongressTaxCode {
             }
         }
       }
+      taxScanner.close();
       /* Calculate two variables: averageRevenueFromTaxInDemYears would be calcluating by doing demTotalPercentages/demYears.size();, the republican equivalent
       would be calculated in the same manner */
       double averageRevenueFromTaxInDemYears = demTotalPercentages/demYears.size();
@@ -122,50 +116,132 @@ public class CongressTaxCode {
                 }
             }
         }
+        houseScanner.close();
         // At the end, return an ArrayList with democraticYears array as index1, republicanYears array as index 2
         ArrayList <ArrayList<String>> toRet = new ArrayList<ArrayList<String>> ();
         toRet.add(demYears);
         toRet.add(repubYears);
         return toRet;
     }
-
-    public static void findCorrelationBetweenRepresentativesAndTaxes (File HouseStatistics, File taxStatistics, int minYear, int maxYear, String correlatedTaxType){
-
+    // Finds correlation coefficient between the percentage of representatives across a span of years and a certain tax type, used for Research question 2
+    public static void findCorrelationBetweenRepresentativesAndTaxes (File houseStatistics, File taxStatistics, int minYear, int maxYear, String correlatedTaxType) throws FileNotFoundException{
+        //Create Scanner of the HouseStatistics File
+        Scanner houseScanner = new Scanner(houseStatistics);
+        // Getting ready to access the columns of the house file and to save the years column and the percentage of seats won column as two separate arraylists
+        houseScanner.nextLine();
+        houseScanner.nextLine();
+        houseScanner.nextLine();
+        // Creating header of the house dataset and saving the year and the representation column as different variables
+        String [] houseHeader = houseScanner.nextLine().split(",");
+        ArrayList <String> houseHeaderAsList = new ArrayList <String> (Arrays.asList(houseHeader));
+        int yearIndex = houseHeaderAsList.indexOf("Year");
+        int indexOfRepresentationColumn = houseHeaderAsList.indexOf("Percentage of seats wonc");
+        // The two array lists that will hold the columns 
+        ArrayList <String> relevantYearsAL = new ArrayList <>();
+        ArrayList <String> relevantRepsColumnAL = new ArrayList <> ();
+        // going through house scanner array and creating parallell arrays holding th eyears and the data relating to the specified tax type
+        while(houseScanner.hasNextLine()){
+            String [] lineOfData = houseScanner.nextLine().split(",");
+            ArrayList <String> currentLineAsList = new ArrayList <String> (Arrays.asList(lineOfData));
+            int currentYear = Integer.parseInt(currentLineAsList.get(yearIndex));
+            // want to check and make sure the year is in range
+            if (currentYear >= minYear && currentYear <= maxYear){
+                //adding each year/piece of tax information to thte two parallel arrays
+                relevantYearsAL.add(currentLineAsList.get((yearIndex)));
+                relevantRepsColumnAL.add(currentLineAsList.get((indexOfRepresentationColumn)));
+            }
+        }
+        houseScanner.close();
+        // Create Scanner to go through tax statistics
+        // Save header, and correlatedTaxType index as a varaible: taxTypeIndex
+        Scanner taxScanner = new Scanner(taxStatistics);
+        String [] header = taxScanner.nextLine().split(",");
+        ArrayList <String> taxHeaderAsList = new ArrayList <String> (Arrays.asList(header));
+        int indexOfTaxYearColumn = taxHeaderAsList.indexOf("Fiscal Year");
+        int indexOfTaxTypeColumn = taxHeaderAsList.indexOf(correlatedTaxType);
+        String [] taxAveragesColumn = new String[relevantYearsAL.size()];
+        // going through the tax data to use the correct years to put the correct tax percentages in the correct slots of the taxAverages column so that it is parallel to the years and representatives arraylists
+        while (taxScanner.hasNextLine()){
+            String [] lineOfTaxData = taxScanner.nextLine().split(",");;
+            ArrayList <String> lineOfTaxDataAL = new ArrayList <String> (Arrays.asList(lineOfTaxData));
+            String currentTaxYear = lineOfTaxDataAL.get(indexOfTaxYearColumn);
+            // get the tax rate corresponding to the current year in the taxes array
+            String taxRateForCurrentYear = lineOfTaxDataAL.get(indexOfTaxTypeColumn);
+            int positionInParallelYearsArray = relevantYearsAL.indexOf(currentTaxYear);
+            // if the year from the taxes array exists within the relevant years arraylist, that information is needed, so it should be added to the taxAveragesColumnArray
+            if(positionInParallelYearsArray != -1){
+                taxAveragesColumn[positionInParallelYearsArray] = taxRateForCurrentYear;
+            }
     }
-    //Create Scanner of the HouseStatistics File
-    // Go through the entire house statistics file and get from the first line, an array list of all of the percentages from the percent seats won column, call it seatsPercentsColumnAL
-    // Also need parallel array with all of the years (in case it was not ordered) call it relevantYearsAL
-    // Create Scanner to go through tax statistics
-    // Save header, and correlatedTaxType index as a varaible: taxTypeIndex
-    // Create array same length as the house statistics array/Year array, taxAveragesColumn
-    // Using indexOfMethod from the year array, add the tax percentage to that slot of the taxAveragesColumn array
-    //change it to an arraylist using .asList, call it taxAveragesColumnAsList
-    // Create a method that takes in 2 array lists and returns an array list that has the x bar, the y bar value of them 
-            // Iterate through array list, add each element to a total, divide the total by the sizes, return
-    // Save x bar and y bar to two new variables
-    /* Use calculateCorrelationNumerator function
-        - takes 2 arrayLists
-        1. uses the x/y bar function to calculate the x and y bars
-        2. establish a total numerator
-        2. use a loop to iterate through all of the elememnts in the arraylists
-        3. for each x element, do x.get(i) - x bar; save to a variable
-        4. for each y element, do y.get(i) - y bar; save to a variable
-        5. multiply the two variables
-        6. add that to the running total sum
-        */
-        /* Make a function to calculate denominator
-        - use the x/y bar function to calculate the x and y 
-        1. yTotal = yTotal + Math.pow((yList.get(i) - ybar), 2);, same for x
-        2. at the end, multiply the root of the two togehter
-        */
-    // back in overarching function, calculate the numerator over the denominator
-    public static double calculateCorrelationNumerator(){
-
+    ArrayList <String> taxAveragesColumnAL = new ArrayList <String> (Arrays.asList(taxAveragesColumn));
+    taxScanner.close();
+    // Now we have 3 parallel arraylists, one corresponds to the years, one corresponds to the percentage of democrats for those years, one corresponds to the percentage federal revenue from the tax type in those years 
+    // Calculate numerator of the correlation coefficient
+    double numerator = calculateCorrelationNumerator(relevantRepsColumnAL, taxAveragesColumnAL);
+    System.out.println("made it out of numerator");
+    double denominator = calculateCorrelationDenominator(relevantRepsColumnAL, taxAveragesColumnAL);
+    System.out.println("The Correlation between democrats in power (in the range of years " + minYear + "-" + maxYear + " for " + correlatedTaxType +  " is " + numerator/denominator);
     }
-    public static double calculateCorrelationDenominator(){
-
+    // Sub method that uses two array lists to calculate the numerator of the correlation coefficient for those array lists
+    public static double calculateCorrelationNumerator(ArrayList <String> xValues, ArrayList <String> yValues){
+        System.out.println("Made it to numerator method");
+        double [] barValues = getBarValues(xValues, yValues);
+        // Save the bar values so they can be used later
+        double xBar = barValues[0];
+        double yBar = barValues[1];
+        double totalNumerator = 0;
+        for(int i = 0; i < xValues.size(); i++){
+            double currentX = Double.parseDouble(xValues.get(i)) - xBar;
+            double currentY = Double.parseDouble(yValues.get(i)) - yBar;
+            // keeping the running total of the numerator
+            totalNumerator = totalNumerator + currentX * currentY;
+        } 
+        return totalNumerator;
     }
-    public static double [] getBarValues(ArrayList <double> xValues, ArrayList <double> yValues){
-        
+    // Sub method that uses two array lists to calculate the denominator of the correlation coefficient for those array lists
+    public static double calculateCorrelationDenominator(ArrayList <String> xValues, ArrayList <String> yValues){
+        double currentXSum = 0; 
+        double currentYSum = 0;
+        double [] barValues = getBarValues(xValues, yValues);
+        // Save the bar values so they can be used later
+        double xBar = barValues[0];
+        double yBar = barValues[1];
+        for(int i = 0; i < xValues.size(); i++){
+            currentXSum = currentXSum + Math.pow(Double.parseDouble(xValues.get(i)) - xBar, 2);
+            currentYSum = currentYSum + Math.pow(Double.parseDouble(yValues.get(i)) - yBar, 2);
+        }
+        return Math.sqrt(currentXSum * currentYSum);
     }
-}
+    // takes two array lists and gets their "bar" or average values
+    public static double [] getBarValues(ArrayList <String> xValues, ArrayList <String> yValues){
+        double yRunningTotal = 0;
+        double xRunningTotal = 0;
+        // Iterate through x and y and get x and y bar values
+        // Get sizes to figure out how long the loop needs to iterate for
+        int xSize = xValues.size();
+        int ySize = yValues.size();
+        int numIterations = 0;
+        // need to iterate through enough times so that the last element of the bigger array list is reached
+        if (xSize > ySize){
+            numIterations = xSize;
+        }
+        else{
+            numIterations = ySize;
+        }
+        int counter = 0;
+        while(counter < numIterations){
+            if(xSize > counter){
+                xRunningTotal = xRunningTotal + Double.parseDouble(xValues.get(counter));
+            }
+            if(ySize > counter){
+                yRunningTotal = yRunningTotal + Double.parseDouble(yValues.get(counter));
+            }
+            counter ++;
+        }
+        // calculate bar values 
+        double xBar = xRunningTotal/xValues.size();
+        double yBar = yRunningTotal/yValues.size();
+        double [] barValues = {xBar, yBar};
+        return barValues;
+    }
+ }
