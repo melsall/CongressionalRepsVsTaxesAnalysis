@@ -69,8 +69,8 @@ public class CongressTaxCode {
       double averageRevenueFromTaxInDemYears = demTotalPercentages/demYears.size();
       double averageRevenueFromTaxInRepubYears = repubTotalPercentages/repubYears.size();
       // Print out a statement specifiying the type of tax, the percent from democratic party and the percent from the republican party
-      System.out.println("The Republican Party's average percent federal revenue from " + typeOfTax + " is: " + averageRevenueFromTaxInRepubYears);
-      System.out.println("The Democratic Party's average percent federal revenue from " + typeOfTax + " is: " + averageRevenueFromTaxInDemYears);
+      System.out.println("The Republican Party's Average Percent Federal Revenue from " + typeOfTax + " is: " + averageRevenueFromTaxInRepubYears);
+      System.out.println("The Democratic Party's Average Percent Federal rRvenue from " + typeOfTax + " is: " + averageRevenueFromTaxInDemYears);
     }
 
     /* This is a helper method that will determine the years within the house file that are "democrat years " and the ones that are "republican years" and 
@@ -178,13 +178,11 @@ public class CongressTaxCode {
     // Now we have 3 parallel arraylists, one corresponds to the years, one corresponds to the percentage of democrats for those years, one corresponds to the percentage federal revenue from the tax type in those years 
     // Calculate numerator of the correlation coefficient
     double numerator = calculateCorrelationNumerator(relevantRepsColumnAL, taxAveragesColumnAL);
-    System.out.println("made it out of numerator");
     double denominator = calculateCorrelationDenominator(relevantRepsColumnAL, taxAveragesColumnAL);
-    System.out.println("The Correlation between democrats in power (in the range of years " + minYear + "-" + maxYear + " for " + correlatedTaxType +  " is " + numerator/denominator);
+    System.out.println("The Correlation between Democrats in power (in the range of years " + minYear + "-" + maxYear + " for " + correlatedTaxType +  " is " + numerator/denominator);
     }
     // Sub method that uses two array lists to calculate the numerator of the correlation coefficient for those array lists
     public static double calculateCorrelationNumerator(ArrayList <String> xValues, ArrayList <String> yValues){
-        System.out.println("Made it to numerator method");
         double [] barValues = getBarValues(xValues, yValues);
         // Save the bar values so they can be used later
         double xBar = barValues[0];
